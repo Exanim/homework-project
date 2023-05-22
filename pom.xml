@@ -3,15 +3,15 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId><!-- TODO: the groupId of your project (e.g., hu.unideb.inf) --></groupId>
-    <artifactId><!-- TODO: the artifactId of your project --></artifactId>
+    <groupId>hu.unideb.inf</groupId>
+    <artifactId>sliding-puzzle</artifactId>
     <version>1.0</version>
-    <description><!-- TODO: a short description of your project --></description>
+    <description>A fun puzzle game made with javaFx</description>
     <developers>
         <developer>
-            <id><!-- TODO: your ID --></id>
-            <name><!-- TODO: your name --></name>
-            <email><!-- TODO: your email address --></email>
+            <id>geadn4</id>
+            <name>Baráth Simon</name>
+            <email>simonbarath7@gmail.com</email>
             <organization>Faculty of Informatics, University of Debrecen</organization>
             <organizationUrl>https://www.inf.unideb.hu/</organizationUrl>
         </developer>
@@ -26,7 +26,7 @@
         <maven.checkstyle.version>3.1.2</maven.checkstyle.version>
         <maven.surefire.version>3.0.0-M6</maven.surefire.version>
         <jacoco.version>0.8.8</jacoco.version>
-        <exec.mainClass><!-- TODO: the main class of your application that contains the main method --></exec.mainClass>
+        <exec.mainClass>Main</exec.mainClass>
     </properties>
     <dependencies>
         <dependency>
