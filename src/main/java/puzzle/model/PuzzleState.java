@@ -27,19 +27,23 @@ public class PuzzleState implements Cloneable {
     public static final int SQUARE = 0;
 
     /**
-     * The index of the red shoe.
+     * The index of the top left corner-tile.
      */
     public static final int TOPLEFT = 1;
 
     /**
-     * The index of the blue shoe.
+     * The index of the top right corner-tile.
      */
     public static final int TOPRIGHT = 2;
 
     /**
-     * The index of the black shoe.
+     * The index of the bottom left corner-tile.
      */
     public static final int BOTTOMLEFT = 3;
+
+    /**
+     * The index of the bottom right corner-tile.
+     */
     public static final int BOTTOMRIGHT = 4;
 
     private ReadOnlyObjectWrapper<Position>[] positions = new ReadOnlyObjectWrapper[4];
@@ -73,12 +77,7 @@ public class PuzzleState implements Cloneable {
         }
         // TODO: Modify this to implement correct goal
         goal.bind(this.positions[SQUARE].isEqualTo(new Position(3, 4)));
-//        goal.bind(isSquareBetweenOtherPieces());
     }
-
-//    private ObservableValue<? extends Boolean> isSquareBetweenOtherPieces() {
-//
-//    }
 
     private void checkPositions(Position[] positions) {
         if (positions.length != 5) {
@@ -89,9 +88,6 @@ public class PuzzleState implements Cloneable {
                 throw new IllegalArgumentException();
             }
         }
-//        if (positions[SQUARE].equals(positions[BLACK_SHOE])) {
-//            throw new IllegalArgumentException();
-//        }
         for (var position1 : positions) {
             for (var position2 : positions) {
                 if (position1.equals(position2)) {
@@ -141,13 +137,32 @@ public class PuzzleState implements Cloneable {
     }
 
     private boolean canMoveUp(int tile) {
-        return getPosition(tile).row() > 0 && isEmpty(getPosition(tile).getUp()) &&
-                isEmpty(getPosition(tile).getUp().getRight());
+        if (getPosition(tile).row() == 0) {
+            return false;
+        }
+        if (tile == BOTTOMLEFT) {
+            return isEmpty(getPosition(tile).getUp()) &&
+                    isEmpty(getPosition(tile).getRight());
+        }
+        if (tile == BOTTOMRIGHT) {
+            return isEmpty(getPosition(tile)) &&
+                    isEmpty(getPosition(tile).getUp().getRight());
+        }
+        return isEmpty(getPosition(tile).getUp()) &&
+                    isEmpty(getPosition(tile).getUp().getRight());
     }
 
     private boolean canMoveRight(int tile) {
-        if (getPosition(tile).col() == BOARD_WIDTH - 1) {
+        if (getPosition(tile).col() + 1 == BOARD_WIDTH - 1) {
             return false;
+        }
+        if (tile == TOPLEFT) {
+            return isEmpty(getPosition(tile).getRight().getRight()) &&
+                    isEmpty(getPosition(tile).getRight().getDown());
+        }
+        if (tile == BOTTOMLEFT) {
+            return isEmpty(getPosition(tile).getRight()) &&
+                    isEmpty(getPosition(tile).getRight().getRight().getDown());
         }
         return isEmpty(getPosition(tile).getRight().getRight()) &&
                 isEmpty(getPosition(tile).getRight().getRight().getDown());
@@ -157,12 +172,31 @@ public class PuzzleState implements Cloneable {
         if (getPosition(tile).row() == BOARD_HEIGHT - 1) {
             return false;
         }
+        if (tile == TOPLEFT) {
+            return isEmpty(getPosition(tile).getDown().getDown()) &&
+                    isEmpty(getPosition(tile).getRight().getDown());
+        }
+        if (tile == TOPRIGHT) {
+            return isEmpty(getPosition(tile).getDown()) &&
+                    isEmpty(getPosition(tile).getRight().getDown().getDown());
+        }
         return isEmpty(getPosition(tile).getDown().getDown()) &&
                 isEmpty(getPosition(tile).getDown().getDown().getRight());
     }
 
     private boolean canMoveLeft(int tile) {
-        return getPosition(tile).col() > 0 && isEmpty(getPosition(tile).getLeft()) &&
+        if (getPosition(tile).col() == 0) {
+            return false;
+        }
+        if (tile == TOPRIGHT) {
+            return isEmpty(getPosition(tile).getRight()) &&
+                    isEmpty(getPosition(tile).getDown());
+        }
+        if (tile == BOTTOMRIGHT) {
+            return isEmpty(getPosition(tile)) &&
+                    isEmpty(getPosition(tile).getDown().getRight());
+        }
+        return isEmpty(getPosition(tile).getLeft()) &&
                 isEmpty(getPosition(tile).getLeft().getDown());
     }
 
@@ -228,7 +262,7 @@ public class PuzzleState implements Cloneable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(positions[0].get(), positions[1].get(), positions[2].get(), positions[3].get());
+        return Objects.hash(positions[0].get(), positions[1].get(), positions[2].get(), positions[3].get(), positions[4].get());
     }
 
     @Override
