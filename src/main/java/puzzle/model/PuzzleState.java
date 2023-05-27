@@ -6,9 +6,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableValue;
 
-import java.util.EnumSet;
-import java.util.Objects;
-import java.util.StringJoiner;
+import java.util.*;
 
 /**
  * Represents the state of the puzzle.
@@ -221,14 +219,15 @@ public class PuzzleState implements Cloneable {
     }
 
     /**
-     * {@return the set of directions to which the tile can be moved}
+     * {@return all the directions each tile can be moved}
      */
-    // TODO: This is implementation from the horseshoe-sliding-puzzle, needs to be updated
-    public EnumSet<Direction> getLegalMoves() {
-        var legalMoves = EnumSet.noneOf(Direction.class);
+    public TreeMap<Integer, Direction> getLegalMoves() {
+        TreeMap<Integer, Direction> legalMoves = new TreeMap<>();
         for (var direction : Direction.values()) {
-            if (canMove(direction)) {
-                legalMoves.add(direction);
+            for (int i = 0; i < 5; i++) {
+                if (canMove(i, direction)) {
+                    legalMoves.put(i, direction);
+                }
             }
         }
         return legalMoves;
