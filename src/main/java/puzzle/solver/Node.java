@@ -5,11 +5,12 @@ import puzzle.model.PuzzleState;
 
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.TreeMap;
 
 public class Node {
 
     private PuzzleState state;
-    private EnumSet<Direction> operators;
+    private TreeMap<Integer, Direction> operators;
     private Optional<Node> parent;
     private Optional<Direction> direction;
 
@@ -43,15 +44,23 @@ public class Node {
     }
 
     public Optional<Node> nextChild() {
-        if (! hasNextChild()) {
+        if (!hasNextChild()) {
             return Optional.empty();
         }
-        var iterator = operators.iterator();
-        var direction = iterator.next();
+
+        var iterator = operators.entrySet().iterator();
+        var tile = iterator.next().getKey();
+        var direction = iterator.next().getValue();
         iterator.remove();
-        var newState = state.clone();
-        newState.move(direction);
-        return Optional.of(new Node(newState, this, direction));
+
+        if (state.canMove(tile, direction)) {
+            var newState = state.clone();
+            newState.move(tile, direction);
+            return Optional.of(new Node(newState, this, direction));
+        }
+
+        // No movable tiles found
+        return Optional.empty();
     }
 
     @Override
