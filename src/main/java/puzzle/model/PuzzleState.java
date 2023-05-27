@@ -1,5 +1,7 @@
 package puzzle.model;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -14,9 +16,13 @@ import java.util.*;
 public class PuzzleState implements Cloneable {
 
     /**
-     * The size of the board.
+     * The height of the board.
      */
     public static final int BOARD_HEIGHT = 4;
+
+    /**
+     * The width of the board.
+     */
     public static final int BOARD_WIDTH = 6;
 
     /**
@@ -44,7 +50,7 @@ public class PuzzleState implements Cloneable {
      */
     public static final int BOTTOMRIGHT = 4;
 
-    private ReadOnlyObjectWrapper<Position>[] positions = new ReadOnlyObjectWrapper[4];
+    private ReadOnlyObjectWrapper<Position>[] positions = new ReadOnlyObjectWrapper[5];
 
     private ReadOnlyBooleanWrapper goal = new ReadOnlyBooleanWrapper();
 
@@ -69,12 +75,11 @@ public class PuzzleState implements Cloneable {
      * @param positions the initial positions of the pieces
      */
     public PuzzleState(Position... positions) {
-        checkPositions(positions);
         for (var i = 0; i < positions.length; i++) {
             this.positions[i] = new ReadOnlyObjectWrapper<>(positions[i]);
         }
-        // TODO: Modify this to implement correct goal
-        goal.bind(this.positions[SQUARE].isEqualTo(new Position(3, 4)));
+        checkPositions(positions);
+        goal.bind(setGoal());
     }
 
     private void checkPositions(Position[] positions) {
@@ -86,14 +91,22 @@ public class PuzzleState implements Cloneable {
                 throw new IllegalArgumentException();
             }
         }
-        for (var position1 : positions) {
-            for (var position2 : positions) {
-                if (position1.equals(position2)) {
-                    throw new IllegalArgumentException();
+        checkForOverlaps(positions);
+    }
+
+    private void checkForOverlaps(Position[] positions) {
+        for (int tileNumber = 0; tileNumber < 5; tileNumber++) {
+            for (int otherTileNumber = tileNumber + 1; otherTileNumber < 5; otherTileNumber++) {
+                for (var position : overlapOf(tileNumber)) {
+                    if (overlapOf(otherTileNumber).contains(position)) {
+                        throw new IllegalArgumentException();
+                    }
                 }
             }
         }
     }
+
+
 
     /**
      * {@return a copy of the position of the piece specified}
@@ -113,6 +126,16 @@ public class PuzzleState implements Cloneable {
      */
     public boolean isGoal() {
         return goal.get();
+    }
+
+    public ObservableValue<? extends Boolean> setGoal() {
+        BooleanBinding condition = Bindings.createBooleanBinding(() ->
+                getPosition(SQUARE).equals(getPosition(TOPLEFT).getRight().getDown()) &&
+                        getPosition(SQUARE).equals(getPosition(TOPRIGHT).getLeft().getDown()) &&
+                        getPosition(SQUARE).equals(getPosition(BOTTOMLEFT).getRight().getUp()) &&
+                        getPosition(SQUARE).equals(getPosition(BOTTOMRIGHT).getLeft().getUp())
+        );
+        return condition;
     }
 
     public ReadOnlyBooleanProperty goalProperty() {
@@ -139,15 +162,15 @@ public class PuzzleState implements Cloneable {
             return false;
         }
         if (tile == BOTTOMLEFT) {
-            return isEmpty(getPosition(tile).getUp()) &&
-                    isEmpty(getPosition(tile).getRight());
+            return isOverlapped(getPosition(tile).getUp()) &&
+                    isOverlapped(getPosition(tile).getRight());
         }
         if (tile == BOTTOMRIGHT) {
-            return isEmpty(getPosition(tile)) &&
-                    isEmpty(getPosition(tile).getUp().getRight());
+            return isOverlapped(getPosition(tile)) &&
+                    isOverlapped(getPosition(tile).getUp().getRight());
         }
-        return isEmpty(getPosition(tile).getUp()) &&
-                    isEmpty(getPosition(tile).getUp().getRight());
+        return isOverlapped(getPosition(tile).getUp()) &&
+                isOverlapped(getPosition(tile).getUp().getRight());
     }
 
     private boolean canMoveRight(int tile) {
@@ -155,31 +178,31 @@ public class PuzzleState implements Cloneable {
             return false;
         }
         if (tile == TOPLEFT) {
-            return isEmpty(getPosition(tile).getRight().getRight()) &&
-                    isEmpty(getPosition(tile).getRight().getDown());
+            return isOverlapped(getPosition(tile).getRight().getRight()) &&
+                    isOverlapped(getPosition(tile).getRight().getDown());
         }
         if (tile == BOTTOMLEFT) {
-            return isEmpty(getPosition(tile).getRight()) &&
-                    isEmpty(getPosition(tile).getRight().getRight().getDown());
+            return isOverlapped(getPosition(tile).getRight()) &&
+                    isOverlapped(getPosition(tile).getRight().getRight().getDown());
         }
-        return isEmpty(getPosition(tile).getRight().getRight()) &&
-                isEmpty(getPosition(tile).getRight().getRight().getDown());
+        return isOverlapped(getPosition(tile).getRight().getRight()) &&
+                isOverlapped(getPosition(tile).getRight().getRight().getDown());
     }
 
     private boolean canMoveDown(int tile) {
-        if (getPosition(tile).row() == BOARD_HEIGHT - 1) {
+        if (getPosition(tile).row() + 1 == BOARD_HEIGHT - 1) {
             return false;
         }
         if (tile == TOPLEFT) {
-            return isEmpty(getPosition(tile).getDown().getDown()) &&
-                    isEmpty(getPosition(tile).getRight().getDown());
+            return isOverlapped(getPosition(tile).getDown().getDown()) &&
+                    isOverlapped(getPosition(tile).getRight().getDown());
         }
         if (tile == TOPRIGHT) {
-            return isEmpty(getPosition(tile).getDown()) &&
-                    isEmpty(getPosition(tile).getRight().getDown().getDown());
+            return isOverlapped(getPosition(tile).getDown()) &&
+                    isOverlapped(getPosition(tile).getRight().getDown().getDown());
         }
-        return isEmpty(getPosition(tile).getDown().getDown()) &&
-                isEmpty(getPosition(tile).getDown().getDown().getRight());
+        return isOverlapped(getPosition(tile).getDown().getDown()) &&
+                isOverlapped(getPosition(tile).getDown().getDown().getRight());
     }
 
     private boolean canMoveLeft(int tile) {
@@ -187,15 +210,15 @@ public class PuzzleState implements Cloneable {
             return false;
         }
         if (tile == TOPRIGHT) {
-            return isEmpty(getPosition(tile).getRight()) &&
-                    isEmpty(getPosition(tile).getDown());
+            return isOverlapped(getPosition(tile).getRight()) &&
+                    isOverlapped(getPosition(tile).getDown());
         }
         if (tile == BOTTOMRIGHT) {
-            return isEmpty(getPosition(tile)) &&
-                    isEmpty(getPosition(tile).getDown().getRight());
+            return isOverlapped(getPosition(tile)) &&
+                    isOverlapped(getPosition(tile).getDown().getLeft());
         }
-        return isEmpty(getPosition(tile).getLeft()) &&
-                isEmpty(getPosition(tile).getLeft().getDown());
+        return isOverlapped(getPosition(tile).getLeft()) &&
+                isOverlapped(getPosition(tile).getLeft().getDown());
     }
 
     /**
@@ -221,20 +244,17 @@ public class PuzzleState implements Cloneable {
     /**
      * {@return all the directions each tile can be moved}
      */
+    // TODO: modify legalMoves to TreeMap<Integer, ArrayList<Direction>> because each tile could move different directions
     public TreeMap<Integer, Direction> getLegalMoves() {
         TreeMap<Integer, Direction> legalMoves = new TreeMap<>();
         for (var direction : Direction.values()) {
-            for (int i = 0; i < 5; i++) {
-                if (canMove(i, direction)) {
-                    legalMoves.put(i, direction);
+            for (int tileNumber = 0; tileNumber < 5; tileNumber++) {
+                if (canMove(tileNumber, direction)) {
+                    legalMoves.put(tileNumber, direction);
                 }
             }
         }
         return legalMoves;
-    }
-
-    private boolean haveEqualPositions(int i, int j) {
-        return getPosition(i).equals(getPosition(j));
     }
 
     private boolean isOnBoard(Position position) {
@@ -242,13 +262,53 @@ public class PuzzleState implements Cloneable {
                 position.col() >= 0 && position.col() < BOARD_WIDTH;
     }
 
-    private boolean isEmpty(Position position) {
-        for (var p : positions) {
-            if (p.get().equals(position)) {
+    public boolean isOverlapped(Position position) {
+        if (!isOnBoard(position)) {
+            return true;
+        }
+        // handle the case where bottom right's position is empty because of the nature of it's shape
+        if (position.equals(getPosition(BOTTOMRIGHT))) {
+            return true;
+        }
+        for (int tileNumber = 0; tileNumber < 5; tileNumber++) {
+            if (overlapOf(tileNumber).contains(position)) {
                 return false;
             }
         }
         return true;
+    }
+
+    public ArrayList<Position> overlapOf(int tile) {
+        switch (tile) {
+            case SQUARE -> {
+                return getAsList(getPosition(SQUARE), getPosition(SQUARE).getRight(), getPosition(SQUARE).getDown(),
+                        getPosition(SQUARE).getRight().getDown());
+            }
+            case TOPLEFT -> {
+                return getAsList(getPosition(TOPLEFT), getPosition(TOPLEFT).getRight(), getPosition(TOPLEFT).getDown());
+            }
+            case TOPRIGHT -> {
+                return getAsList(getPosition(TOPRIGHT), getPosition(TOPRIGHT).getRight(),
+                        getPosition(TOPRIGHT).getRight().getDown());
+
+            }
+            case BOTTOMLEFT -> {
+                return getAsList(getPosition(BOTTOMLEFT), getPosition(BOTTOMLEFT).getDown(),
+                        getPosition(BOTTOMLEFT).getDown().getRight());
+
+            }
+            case BOTTOMRIGHT -> {
+                return getAsList(getPosition(BOTTOMRIGHT).getDown(), getPosition(BOTTOMRIGHT).getDown().getRight(),
+                        getPosition(BOTTOMRIGHT).getRight());
+
+            }
+            default -> throw new IllegalArgumentException();
+        }
+    }
+
+    public ArrayList<Position> getAsList(Position... positions) {
+        ArrayList<Position> list = new ArrayList<>(Arrays.asList(positions));
+        return list;
     }
 
     @Override
